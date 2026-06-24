@@ -37,6 +37,12 @@ class Op:
         raise NotImplementedError
 
 
+try:
+    import autograd_backend as backend
+    HAS_CPP_BACKEND = True
+except ImportError:
+    HAS_CPP_BACKEND = False
+
 # ------------------- Operation Implementations -------------------
 
 class Add(Op):
@@ -75,6 +81,8 @@ class MatMul(Op):
     def forward(self, x, y):
         self.x = x
         self.y = y
+        if HAS_CPP_BACKEND:
+            return backend.matmul(x, y)
         return np.matmul(x, y)
 
     def backward(self, grad_output):
@@ -89,11 +97,14 @@ class MatMul(Op):
 class ReLU(Op):
     def forward(self, x):
         self.x = x
+        if HAS_CPP_BACKEND:
+            return backend.relu(x)
         return np.maximum(x, 0)
 
     def backward(self, grad_output):
         # Derivative of ReLU is 1 if x > 0 else 0
         return grad_output * (self.x > 0)
+
 
 
 class Sum(Op):
